@@ -6,13 +6,13 @@
 ### dada2 and phyloseq are both Bioconductor packages
 
 # test if Bioconductor is already installed
-install.packages("BiocManager", version = 3.14)
+#install.packages("BiocManager", version = 3.14)
 
 # load package
 require(BiocManager)
 
 # install dada2
-BiocManager::install("dada2")
+#BiocManager::install("dada2")
 
 # load package
 require(dada2)
@@ -87,8 +87,13 @@ cleaned <- filterAndTrim(
   # add any necessary filtering parameters
   maxN = 0,
   
+  # set maxEE to 2
+  maxEE = 2,
+  minLen = 100,
+  
   # MAC ONLY: multithread ability
-  multithread = TRUE
+  multithread = TRUE,
+  verbose = TRUE
 )
 
 # path to filtered and cleaned reads
@@ -111,7 +116,11 @@ FILTEREDF = "_F_filt.fastq.gz"
 FILTEREDR = "_R_filt.fastq.gz"
 
 # get forward and reverse reads
-forward <- sort(list.files(CLEANEDPATH, pattern = FILTEREDF, full.names = TRUE))
+forward <- sort(
+  list.files(
+    CLEANEDPATH, pattern = FILTEREDF, full.names = TRUE
+    )
+  )
 reverse <- sort(list.files(CLEANEDPATH, pattern = FILTEREDR, full.names = TRUE))
 
 # check to make sure that the lengths of both files are the same and that they match
@@ -129,9 +138,28 @@ if(length(fwdNames) != length(revNames)) {
 
 # perform error learning
 errF <- learnErrors(forward, 
-                    multithread = TRUE)
+                    multithread = TRUE,
+                    # speed up
+                    nbases = 1e2,
+                    verbose = 2)
 errR <- learnErrors(reverse, 
-                    multithread = TRUE)
+                    multithread = TRUE,
+                    nbases = 1e2,
+                    verbose = 2)
+
+# visualize error plots - with binned quality score, will look bad
+plotErrors(errF, nominalQ = TRUE)
+
+# visualize reverse plots
+plotErrors(errR, nominalQ = TRUE)
+
+#### troubleshoot - does derep lower number of ASVs
+#derepFs <- derepFastq(filtFs, verbose=TRUE)
+#derepRs <- derepFastq(filtRs, verbose=TRUE)
+# Name the derep-class objects by the sample names
+#names(derepFs) <- sample.names
+#names(derepRs) <- sample.names
+
 
 # perform denoising on forward and reverse reads
 dadaForward <- dada(derep = forward, 
