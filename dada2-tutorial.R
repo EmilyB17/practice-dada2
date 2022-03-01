@@ -17,6 +17,9 @@ require(BiocManager)
 # load package
 require(dada2)
 
+## read in our image from the last session
+load("working-image.RData")
+
 
 # path to directory that contains fastq files
 # Github doesn't handle file storage well so these are on OneDrive
@@ -195,57 +198,6 @@ tax <- assignTaxonomy(seqs = seqtab.nochim,
 ## OPTIONAL: export ASV table and taxonomy table to text files
 # to import into QIIME or other program
 
-
-### ---- phyloseq ----
-
-# create demo sample data - in reality, you would have metadata
-# associated with your dataset
-sampleDF <- data.frame(sample = sapply(strsplit(rownames(seqtab.nochim), "_F"), `[`, 1),
-                       treatment = c("Treatment", "Control"),
-                       sex = c("Male", "Female"),
-                       row.names = rownames(seqtab.nochim))
-
-# make phyloseq object
-## NOTE: Phyloseq has wrappers for import directly from QIIME among others
-# check phyloseq Github for more info
-
-## Phyloseq objects need 3 things: ASV table, taxonomy table, and sample data
-# OPTIONAL: add a phylogenetic tree
-ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE),
-               sample_data(sampleDF), 
-               tax_table(tax))
-
-# default settings are messy; replace strings of DNA with an ASV sequence 
-taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
-
-# examine the phyloseq object
-ps
-
-# to examine parts of phyloseq object, use "@"
-ps@sam_data
-
-# to get columns within the sample data, use "@" followed by "$"
-ps@sam_data$treatment
-
-# what does the ASV table look like?
-head(ps@otu_table)
-
-# the taxonomy table serves as a lookup table for ASVs
-head(ps@tax_table)
-
-# how many Phyla were classified?
-get_taxa_unique(physeq = ps,
-                taxonomic.rank = "Phylum")
-
-## NOTE: phyloseq plots are wrappers for ggplot and take gg commands
-#Abundance barplot by Sample
-plot_bar(physeq = ps, 
-         x = "sample", 
-         y = "Abundance", 
-         fill = "Phylum", 
-         title = "Abundance Barplot by Sample")
-
-# Alpha diversity plot
-plot_richness(ps, x="treatment", measures=c("Shannon", "Simpson"), color="treatment")
-
-
+# end of dada2 - export objects
+save(seqtab.nochim, file = "asv-table.RData")
+#save(tax, file = "taxonomy-table.RData") # didn't run this step - long download
